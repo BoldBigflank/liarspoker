@@ -4,7 +4,25 @@ prepend scripts
     script(src="/socket.io/socket.io.js")
 
 prepend content
+    .navbar.navbar-fixed-top
+        .navbar-inner
+            .container-fluid
+                p.navbar-text.name.pull-left#playerName(data-bind="text: player().name") Name
+                ul.nav.pull-right
+                    li.dropdown
+                        a.dropdown-toggle(href="#") 
+                            span#playerScore(data-bind="text: player().score") Score
+                            b.caret
+                        ul.dropdown-menu#scores(data-bind="foreach: players")
+                            li
+                                span(data-bind="text: name")
+                                |  -> 
+                                span(data-bind="text: score")
+                ul.nav.pull-right
+                    a.btn#brag(data-bind='text: (winner.id() == "#{uuid}") ? "Brag" : "Invite"') Brag
+
     .container-fluid
+        .alert.alert-error#alert(style="display: none") CRISIS ALERT
         .row
             .span6 
                 h1 Player
@@ -44,24 +62,26 @@ prepend content
                 button.btn Call Liar
         .row
             .span6
-                h1 Bet
+                h1 Bid
         .row
-            .span2.offset6
-                button.btn Higher
-        .row
-            .span12
-                .span2.offset2
-                    button.btn Fewer
-                .span1 Die
-                .span1 Die
-                .span1 Die
-                .span1 Die
-                .span1 Die
-                .span2
-                    button.btn More
-        .row
-            .span2.offset6
-                button.btn Lower
+            .span5
+                .row
+                    .span1.offset1
+                        button.btn Fewer
+                    .span1
+                        button.btn Higher
+                    .span1
+                        button.btn More
+                .row
+                    .span1 Die
+                    .span1 Die
+                    .span1 Die
+                    .span1 Die
+                    .span1 Die
+                    
+                .row
+                    .span1.offset2
+                        button.btn Lower
         .row
             .span2
                 button.btn Bid
@@ -80,15 +100,22 @@ prepend content
     script
         var uuid = '#{uuid}'
         var gameId = '#{gameId}'
+        var alertInterval
+        
         var socket = io.connect('#');
         var viewModel = ko.mapping.fromJS(!{JSON.stringify(game)});
-        socket.on('alert', function (data) {
-            console.log(data);
-        });
 
         socket.on('game', function(data){
             // Knockout Implementation
             console.log("Game ", data)
             ko.mapping.fromJS(data, viewModel);
         })
+        
+        socket.on('alert', function(data){
+            console.log("ALERT: ", data)
+            $('#alert').html(data).show()
+            clearInterval(alertInterval)
+            alertInterval = setInterval(function(){$('#alert').hide()}, 4000)
+        })
+
         socket.emit('join', {gameId:gameId, uuid:uuid})

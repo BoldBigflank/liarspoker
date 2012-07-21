@@ -18,11 +18,12 @@ exports.join = function(gameId, id, cb){
 	while (player.hand.length < config.game.handSize) { player.hand.push( Math.floor(Math.random() * config.game.maxDie )) }
 
 	player.save(function(err){
-		Game.findById(gameId).exec(function(err, game){
+		Game.findOne({'name':gameId}).exec(function(err, game){
 			if(!game)
-				game = new Game()
+				game = new Game({name:gameId})
 			game.players.push(player)
 			if(!game._turn) game._turn = player._id
+			if(!game._bid) game._bid = (new Bid())._id
 			game.save()
 			cb(null, game)
 		})
