@@ -1,0 +1,26 @@
+extends layout
+
+prepend scripts
+    script(src="/socket.io/socket.io.js")
+
+prepend content
+    h1= title
+    p Welcome to #{title}
+
+    
+    script(src="/socket.io/socket.io.js")
+    script
+        var uuid = '#{uuid}'
+        var gameId = '#{gameId}'
+        var socket = io.connect('#');
+        var viewModel = ko.mapping.fromJS(!{JSON.stringify(game)});
+        socket.on('alert', function (data) {
+            console.log(data);
+        });
+
+        socket.on('game', function(data){
+            // Knockout Implementation
+            console.log("Game ", data)
+            ko.mapping.fromJS(data, viewModel);
+        })
+        socket.emit('join', {gameId:gameId, uuid:uuid})
