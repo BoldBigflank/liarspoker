@@ -4,7 +4,7 @@ var Schema = mongoose.Schema
 
 var Player = new Schema({
       id        : ObjectId
-    , name      : String
+    , name      : { type:String, default:'name'}
     , score     : { type:Number, default:0}
     , hand      : [{type: Number}]
 })
@@ -17,11 +17,12 @@ var Bid = new Schema({
 
 var Game = new Schema({
       id            : ObjectId
-    , gameId        : {type: String, default: ''}
+    , name        : {type: String, default: ''}
     , state         : {type: String, default: 'open'}
     , players       : [Player]
     , _turn         : { type: Schema.ObjectId, ref: 'Player' }
     , _bid          : { type: Schema.ObjectId, ref: 'Bid' }
+    , _winner       : { type: Schema.ObjectId, ref: 'Player'}
 })
 
 mongoose.model("Game", Game);

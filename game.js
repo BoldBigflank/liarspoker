@@ -7,21 +7,28 @@ var config = require('./config')
 var _ = require('underscore')
 
 exports.getGame = function(name, cb){
-	Game.findOne({'name':name}, cb)
+	Game.findOne({'name':name}).populate('_bid').populate('_turn').exec(cb)
 }
 
 exports.join = function(gameId, id, cb){
-	console.log("game.join") // Add the player to the game
+	console.log("game.join", gameId, id) // Add the player to the game
 	Player.findById(id).exec(function(err, player){
+		if(!player){
+			player = new Player({"_id":ObjectId(id)})
+			player.save()
+		} 
 		// Give the person a hand
 		while (player.hand.length < config.game.handSize) { player.hand.push( Math.floor(Math.random() * config.game.maxDie )) }
 		player.save(function(err){
-			Game.findById(gameId).exec(function(err, game){
-				if(!game)
-					game = new Game({gameId:gameId})
+			Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
+				if(!game){
+					game = new Game({name:gameId})
+				}
 				game.players.push(player)
 				if(!game._turn) game._turn = player._id
-				if(!game._bid) game._bid = (new Bid())._id
+				var bid = new Bid()
+				bid.save()
+				if(!game._bid) game._bid = (bid)._id
 				game.save()
 				cb(null, game)
 			})
@@ -31,7 +38,7 @@ exports.join = function(gameId, id, cb){
 
 exports.leave = function(gameId, id, cb){
 	console.log("game.leave", gameId, id)
-	Game.findById(gameId).exec(function(err, game){
+	Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
 		if(!game) return cb("Game not found")
 		Player.findById(id).exec(function(err, player){
 			if(err) cb(err)
@@ -46,8 +53,17 @@ exports.leave = function(gameId, id, cb){
 	})
 }
 
+exports.name = function(gameId, id, name, cb){
+	Game.findById(gameId).exec(function(err, game){
+		game.players.id(id).name = name
+		game.save(function(err){
+			cb(err, game)
+		})
+	})
+}
+
 exports.bid = function(gameId, bid, cb){
-	console.log("game.bid") // Set the bid
+	console.log("game.bid", gameId, bid) // Set the bid
 	Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
 		// If it's the person's turn: set the bid, make the turn the next player's
 		var bid = new Bid(bid)
@@ -60,7 +76,7 @@ exports.bid = function(gameId, bid, cb){
 }
 
 exports.liar = function(gameId, liar, cb){
-	console.log("game.liar") // End the round, determine winner
+	console.log("game.liar", gameId, liar) // End the round, determine winner
 	Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
 		// Winner is either turn or bid
 
@@ -74,7 +90,7 @@ exports.liar = function(gameId, liar, cb){
 }
 
 exports.next = function(gameId, cb){
-	console.log("game.next")
+	console.log("game.next", gameId)
 	Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
 		game.state = 'open'
 		var bid = new Bid()

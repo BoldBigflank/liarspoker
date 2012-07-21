@@ -2,6 +2,8 @@ extends layout
 
 prepend scripts
     script(src="/socket.io/socket.io.js")
+    script(src="/js/underscore.js")
+    
 
 prepend content
     .navbar.navbar-fixed-top
@@ -19,66 +21,29 @@ prepend content
                                 |  -> 
                                 span(data-bind="text: score")
                 ul.nav.pull-right
-                    a.btn#brag(data-bind='text: (winner.id() == "#{uuid}") ? "Brag" : "Invite"') Brag
+                    a.btn#brag Invite
 
     .container-fluid
         .alert.alert-error#alert(style="display: none") CRISIS ALERT
-        .row
+        .row(data-bind="foreach: players")
             .span6 
                 .row
                     .span4
-                        h1 Player
+                        h1(data-bind="text: name")
                     .span2 
-                        h1 Score
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-            .span6 
-                .row
-                    .span4
-                        h1 Player
-                    .span2 
-                        h1 Score
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-        .row
-            .span6 
-                .row
-                    .span4
-                        h1 Player
-                    .span2 
-                        h1 Score
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-            .span6 
-                .row
-                    .span4
-                        h1 Player
-                    .span2 
-                        h1 Score
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
+                        h1(data-bind="text: score")
+                .row(data-bind="foreach: hand")
+                    .span1(data-bind="text:$data")
         .row
             .span2
                 button.btn Call Liar
         .row
-            .span6
+            .span3
                 h1 Bid
+            .span1
+                h1(data-bind="text: _bid.face")
+            .span1
+                h1(data-bind="text: _bid.quantity")
         .row
             .span5
                 .row
@@ -104,12 +69,8 @@ prepend content
         .row
             .span6 
                 h1 Hand
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
+                .row(data-bind="foreach:player().hand")
+                    .span1(data-bind="text:$data")
 
     
     script(src="/socket.io/socket.io.js")
@@ -120,6 +81,12 @@ prepend content
         
         var socket = io.connect('#');
         var viewModel = ko.mapping.fromJS(!{JSON.stringify(game)});
+        viewModel.player = ko.computed( function(){
+            return _.find( viewModel.players(), function(player){
+                return player._id() == uuid 
+             }) || {}
+        })
+        ko.applyBindings(viewModel);
 
         socket.on('game', function(data){
             // Knockout Implementation
@@ -134,4 +101,9 @@ prepend content
             alertInterval = setInterval(function(){$('#alert').hide()}, 4000)
         })
 
-        socket.emit('join', {gameId:gameId, uuid:uuid})
+        $("#playerName").click(function(){
+            // Change the person's name
+            socket.emit('name', prompt("Enter Your Name:", ""))
+        })
+
+        socket.emit('join', {'gameId': gameId, 'uuid': uuid})

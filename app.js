@@ -15,6 +15,7 @@ mongoose.connect("mongodb://localhost:27017/liarspoker");
 require('./models')
 var Game = mongoose.model("Game", Game);
 var Player = mongoose.model("Player", Player)
+var Bid = mongoose.model("Bid", Bid)
 
 // Configuration
 
@@ -48,7 +49,8 @@ app.get('/', function (req, res) {
     } 
     liarspoker.getGame('index', function(err, game){
         if(!game){
-            game = new Game({'name':'index'})
+            var bid = new Bid()
+            game = new Game({'name':'index', '_bid':bid._id})
             game.save()
         }
         res.render(__dirname + '/views/index.jade', {title: "Meta4", uuid: req.session.uuid, game: game, gameId: game._id});    
@@ -78,6 +80,19 @@ io.sockets.on('connection', function (socket) {
         liarspoker.join(data.gameId, data.uuid, function(err, res){
             if (err) { socket.emit("alert", err) }
             else{ io.sockets.emit("game", res ) }
+        })
+    })
+
+    // Player changes their name
+    socket.on('name', function(name){
+        socket.get('game', function(err, gameId){
+            if(err) return
+            socket.get('uuid', function(err, uuid){
+                if(err) return
+                liarspoker.name(gameId, uuid, name, function(err, game){
+                    io.sockets.emit('game', game)
+                })
+            })
         })
     })
 
