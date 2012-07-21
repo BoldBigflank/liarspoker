@@ -26,17 +26,14 @@ prepend content
     .container-fluid
         .alert.alert-error#alert(style="display: none") CRISIS ALERT
         .row(data-bind="foreach: players")
-            .span6 
-                .row
+            .span6(data-bind="visible: $parent.player()._id() != _id()")
+                .row(data-bind="style:{ color: $parent._turn._id() == _id() ? 'green' : ''}")
                     .span4
                         h1(data-bind="text: name")
                     .span2 
                         h1(data-bind="text: score")
                 .row(data-bind="foreach: hand")
                     .span1(data-bind="text:$data")
-        .row
-            .span2
-                button.btn Call Liar
         .row
             .span3
                 h1 Bid
@@ -45,14 +42,17 @@ prepend content
             .span1
                 h1(data-bind="text: _bid.quantity")
         .row
-            .span5
+            .span5(data-bind="visible: player()._id == _turn._id()")
+                .row
+                    .span2
+                        button.btn Call Liar
                 .row
                     .span1.offset1
-                        button.btn Fewer
+                        button.btn(data-bind="click: function(){viewModel._bid.quantity -= 1}") Fewer
                     .span1
-                        button.btn Higher
+                        button.btn(data-bind="click: function(){viewModel._bid.face += 1}") Higher
                     .span1
-                        button.btn More
+                        button.btn(data-bind="click: function(){viewModel._bid.quantity += 1}") More
                 .row
                     .span1 Die
                     .span1 Die
@@ -62,15 +62,16 @@ prepend content
                     
                 .row
                     .span1.offset2
-                        button.btn Lower
-        .row
-            .span2
-                button.btn Bid
-        .row
-            .span6 
-                h1 Hand
-                .row(data-bind="foreach:player().hand")
-                    .span1(data-bind="text:$data")
+                        button.btn(data-bind="click: function(){viewModel._bid.face -= 1}") Lower
+                .row
+                    .span2
+                        button.btn#bid Bid
+        .navbar.navbar-fixed-bottom
+            .navbar-inner
+                .container-fluid
+                    h1(data-bind="text: player().name") Hand
+                    .row(data-bind="foreach:player().hand")
+                        .span1(data-bind="text:$data")
 
     
     script(src="/socket.io/socket.io.js")

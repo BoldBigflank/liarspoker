@@ -53,7 +53,7 @@ app.get('/', function (req, res) {
             game = new Game({'name':'index', '_bid':bid._id})
             game.save()
         }
-        res.render(__dirname + '/views/index.jade', {title: "Meta4", uuid: req.session.uuid, game: game, gameId: game._id});    
+        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, game: game, gameId: game._id});    
     })
     
 }); 

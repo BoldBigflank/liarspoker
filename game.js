@@ -54,7 +54,7 @@ exports.leave = function(gameId, id, cb){
 }
 
 exports.name = function(gameId, id, name, cb){
-	Game.findById(gameId).exec(function(err, game){
+	Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
 		game.players.id(id).name = name
 		game.save(function(err){
 			cb(err, game)
