@@ -16,7 +16,7 @@ require('./models')
 var Game = mongoose.model("Game", Game);
 var Player = mongoose.model("Player", Player)
 var Bid = mongoose.model("Bid", Bid)
-
+liarspoker.init()
 // Configuration
 
 app.configure(function(){
@@ -47,13 +47,8 @@ app.get('/', function (req, res) {
         player.save()
         req.session.uuid = player._id
     } 
-    liarspoker.getGame('index', function(err, game){
-        if(!game){
-            var bid = new Bid()
-            game = new Game({'name':'index', '_bid':bid._id})
-            game.save()
-        }
-        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, game: game, gameId: game._id});    
+    liarspoker.join('index', req.session.uuid, function(err, game){
+        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, game: game, gameId: game._id});
     })
     
 }); 
@@ -77,10 +72,10 @@ io.sockets.on('connection', function (socket) {
         socket.set('uuid', data.uuid)
         socket.set('game', data.gameId)
 
-        liarspoker.join(data.gameId, data.uuid, function(err, res){
-            if (err) { socket.emit("alert", err) }
-            else{ io.sockets.emit("game", res ) }
-        })
+        // liarspoker.join(data.gameId, data.uuid, function(err, res){
+        //     if (err) { socket.emit("alert", err) }
+        //     else{ io.sockets.emit("game", res ) }
+        // })
     })
 
     // Player changes their name

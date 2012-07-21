@@ -27,7 +27,7 @@ prepend content
         .alert.alert-error#alert(style="display: none") CRISIS ALERT
         .row(data-bind="foreach: players")
             .span6(data-bind="visible: $parent.player()._id() != _id()")
-                .row(data-bind="style:{ color: $parent._turn._id() == _id() ? 'green' : ''}")
+                .row(data-bind="style:{ color: $parent._turn && $parent._turn._id() == _id() ? 'green' : ''}")
                     .span4
                         h1(data-bind="text: name")
                     .span2 
@@ -42,7 +42,7 @@ prepend content
             .span1
                 h1(data-bind="text: _bid.quantity")
         .row
-            .span5(data-bind="visible: player()._id == _turn._id()")
+            .span5(data-bind="visible: viewModel._turn && player()._id() == _turn._id()")
                 .row
                     .span2
                         button.btn Call Liar
@@ -82,10 +82,11 @@ prepend content
         
         var socket = io.connect('#');
         var viewModel = ko.mapping.fromJS(!{JSON.stringify(game)});
+        console.log("Init, ", !{JSON.stringify(game)})
         viewModel.player = ko.computed( function(){
             return _.find( viewModel.players(), function(player){
                 return player._id() == uuid 
-             }) || {}
+             }) || { _id:'', name:'', score:0, hand:[]}
         })
         ko.applyBindings(viewModel);
 

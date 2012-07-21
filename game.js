@@ -6,12 +6,36 @@ var Bid = mongoose.model("Bid", Bid);
 var config = require('./config')
 var _ = require('underscore')
 
-exports.getGame = function(name, cb){
-	Game.findOne({'name':name}).populate('_bid').populate('_turn').exec(cb)
+exports.init = function(){
+	Game.find().remove()
+	Player.find().remove()
+	Bid.find().remove()
 }
 
-exports.join = function(gameId, id, cb){
-	console.log("game.join", gameId, id) // Add the player to the game
+exports.getGame = function(name, playerId, cb){
+	Game.findOne({'name':name}).populate('_bid').populate('_turn').exec(function(err, game){
+		if(!game){
+		    var bid = new Bid()
+		    var turn = new Player({'_id':''})
+		    game = new Game({'name':'index', '_bid':bid._id, '_turn':turn})
+		    Player.findById(playerId, function(err, player){
+		    	game.players.push(player)
+		    	game.save(function(err){
+		    		cb(err, game)
+		    	})
+		    })
+		}
+		else{
+			if(!game.players.id(playerId)){
+				game.players.push()
+			}
+		}
+			cb(err, game)
+	})
+}
+
+exports.join = function(gameName, id, cb){
+	console.log("game.join", gameName, id) // Add the player to the game
 	Player.findById(id).exec(function(err, player){
 		if(!player){
 			player = new Player({"_id":ObjectId(id)})
@@ -20,17 +44,25 @@ exports.join = function(gameId, id, cb){
 		// Give the person a hand
 		while (player.hand.length < config.game.handSize) { player.hand.push( Math.floor(Math.random() * config.game.maxDie )) }
 		player.save(function(err){
-			Game.findById(gameId).populate('_bid').populate('_turn').exec(function(err, game){
+			Game.findOne({'name':gameName}).exec(function(err, game){
 				if(!game){
-					game = new Game({name:gameId})
+					console.log("new game")
+					game = new Game({name:gameName})
+					game.save(function(err){
+
+					})
 				}
 				game.players.push(player)
-				if(!game._turn) game._turn = player._id
+				if(!game._turn) game._turn = player
 				var bid = new Bid()
 				bid.save()
-				if(!game._bid) game._bid = (bid)._id
-				game.save()
-				cb(null, game)
+				if(!game._bid) game._bid = bid
+				game.save(function(err){
+					Game.findById(game._id).populate('_bid').populate('_turn').exec(function(err, game){
+						cb(null, game)
+					})
+				})
+				
 			})
 		})
 	})
