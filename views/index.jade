@@ -25,7 +25,11 @@ prepend content
         .alert.alert-error#alert(style="display: none") CRISIS ALERT
         .row
             .span6 
-                h1 Player
+                .row
+                    .span4
+                        h1 Player
+                    .span2 
+                        h1 Score
                 .row
                     .span1 Die
                     .span1 Die
@@ -33,7 +37,11 @@ prepend content
                     .span1 Die
                     .span1 Die
             .span6 
-                h1 Player
+                .row
+                    .span4
+                        h1 Player
+                    .span2 
+                        h1 Score
                 .row
                     .span1 Die
                     .span1 Die
@@ -42,7 +50,11 @@ prepend content
                     .span1 Die
         .row
             .span6 
-                h1 Player
+                .row
+                    .span4
+                        h1 Player
+                    .span2 
+                        h1 Score
                 .row
                     .span1 Die
                     .span1 Die
@@ -50,7 +62,11 @@ prepend content
                     .span1 Die
                     .span1 Die
             .span6 
-                h1 Player
+                .row
+                    .span4
+                        h1 Player
+                    .span2 
+                        h1 Score
                 .row
                     .span1 Die
                     .span1 Die
@@ -110,7 +126,7 @@ prepend content
             console.log("Game ", data)
             ko.mapping.fromJS(data, viewModel);
         })
-        
+
         socket.on('alert', function(data){
             console.log("ALERT: ", data)
             $('#alert').html(data).show()

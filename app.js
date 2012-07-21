@@ -7,13 +7,14 @@ var express = require('express')
   , routes = require('./routes')
   , mongoose = require('mongoose')
   , config = require('./config')
-  , game = require('./game')
+  , liarspoker = require('./game')
   , app = module.exports = express.createServer()
   , io = require('socket.io').listen(app)
 
 mongoose.connect("mongodb://localhost:27017/liarspoker");
 require('./models')
 var Game = mongoose.model("Game", Game);
+var Player = mongoose.model("Player", Player)
 
 // Configuration
 
@@ -39,20 +40,42 @@ app.configure('production', function(){
 // Routes
 
 app.get('/', function (req, res) {
-    if (typeof req.session.uuid === 'undefined') req.session.uuid = Math.floor(Math.random()*10000001)
-    res.render(__dirname + '/views/index.jade', {title: "Meta4", uuid: req.session.uuid, game: new Game(), gameId: 'index'});
+    if (typeof req.session.uuid === 'undefined'){
+        // req.session.uuid = Math.floor(Math.random()*10000001)
+        var player = new Player()
+        player.save()
+        req.session.uuid = player._id
+    } 
+    liarspoker.getGame('index', function(err, game){
+        if(!game){
+            game = new Game({'name':'index'})
+            game.save()
+        }
+        res.render(__dirname + '/views/index.jade', {title: "Meta4", uuid: req.session.uuid, game: game, gameId: game._id});    
+    })
+    
 }); 
 
 io.sockets.on('connection', function (socket) {
     console.log("Connection", socket.id)
     socket.emit('alert', "You have been alerted")
-    
+    socket.on('disconnect', function(){
+        socket.get('game', function(err, gameId){
+            if(err) return
+            socket.get('uuid', function(err, uuid){
+                if(err) return
+                liarspoker.leave(gameId, uuid, function(err, game){
+                    io.sockets.emit('game', game)
+                })
+            })
+        })
+    })
     // User enters
     socket.on('join', function(data){
         socket.set('uuid', data.uuid)
         socket.set('game', data.gameId)
 
-        game.join(data.gameId, data.uuid, function(err, res){
+        liarspoker.join(data.gameId, data.uuid, function(err, res){
             if (err) { socket.emit("alert", err) }
             else{ io.sockets.emit("game", res ) }
         })
@@ -61,8 +84,8 @@ io.sockets.on('connection', function (socket) {
     // User places a bid
     socket.on('bid', function(data){
         console.log("bid called", data)
-        socket.get('game', function(gameId){
-            game.bid(gameId, data, function(game){
+        socket.get('game', function(err, gameId){
+            liarspoker.bid(gameId, data, function(err, game){
                 io.sockets.emit('game', game)
             })
         })
@@ -70,8 +93,8 @@ io.sockets.on('connection', function (socket) {
 
     // User calls liar
     socket.on('liar', function(data){
-        socket.get('game', function(gameId){
-            game.liar(gameId, data, function(game){
+        socket.get('game', function(err, gameId){
+            liarspoker.liar(gameId, data, function(err, game){
                 io.sockets.emit('game', game)
             })
         })
@@ -79,13 +102,19 @@ io.sockets.on('connection', function (socket) {
 
     // User requests next round
     socket.on('next', function(data){
-        socket.get('game', function(gameId){
-            game.liar(gameId, data, function(game){
+        socket.get('game', function(err, gameId){
+            liarspoker.liar(gameId, data, function(err, game){
                 io.sockets.emit('game', game)
             })
         })
     })
+    socket.on('reset', function(data){
+        socket.get('game', function(err, gameId){
+            liarspoker.reset(gameId, function(err, game){
 
+            })
+        })
+    })
 })
 
 var port = process.env.PORT || 3000

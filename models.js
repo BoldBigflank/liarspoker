@@ -17,7 +17,7 @@ var Bid = new Schema({
 
 var Game = new Schema({
       id            : ObjectId
-    , name          : {type: String, default: ''}
+    , gameId        : {type: String, default: ''}
     , state         : {type: String, default: 'open'}
     , players       : [Player]
     , _turn         : { type: Schema.ObjectId, ref: 'Player' }
