@@ -35,24 +35,29 @@ prepend content
                 .row(data-bind="foreach: hand")
                     .span1(data-bind="text:$data")
         .row
-            .span3
+            .span1
                 h1 Bid
+            .span2
+                h1(data-bind="text: _bid.name")
             .span1
                 h1(data-bind="text: _bid.face")
             .span1
                 h1(data-bind="text: _bid.quantity")
         .row
-            .span5(data-bind="visible: viewModel._turn && player()._id() == _turn._id()")
+            .span5(data-bind="visible: player()._id() == _turn._id()")
+                .row
+                    .span5
+                        h1 Your bid
                 .row
                     .span2
                         button.btn Call Liar
                 .row
                     .span1.offset1
-                        button.btn(data-bind="click: function(){viewModel._bid.quantity -= 1}") Fewer
+                        button.btn(data-bind="text: myQuantity, click: function(){viewModel.myQuantity(viewModel.myQuantity()-1)}") Fewer
                     .span1
-                        button.btn(data-bind="click: function(){viewModel._bid.face += 1}") Higher
+                        button.btn(data-bind="text: myFace, click: function(){viewModel.myFace(viewModel.myFace()+1)}") Higher
                     .span1
-                        button.btn(data-bind="click: function(){viewModel._bid.quantity += 1}") More
+                        button.btn(data-bind="click: function(){viewModel.myQuantity(viewModel.myQuantity()+1)}") More
                 .row
                     .span1 Die
                     .span1 Die
@@ -62,7 +67,7 @@ prepend content
                     
                 .row
                     .span1.offset2
-                        button.btn(data-bind="click: function(){viewModel._bid.face -= 1}") Lower
+                        button.btn(data-bind="click: function(){viewModel.myFace(viewModel.myFace()-1)}") Lower
                 .row
                     .span2
                         button.btn#bid Bid
@@ -79,21 +84,27 @@ prepend content
         var uuid = '#{uuid}'
         var gameId = '#{gameId}'
         var alertInterval
-        
+        var viewModel
         var socket = io.connect('#');
-        var viewModel = ko.mapping.fromJS(!{JSON.stringify(game)});
-        console.log("Init, ", !{JSON.stringify(game)})
-        viewModel.player = ko.computed( function(){
-            return _.find( viewModel.players(), function(player){
-                return player._id() == uuid 
-             }) || { _id:'', name:'', score:0, hand:[]}
-        })
-        ko.applyBindings(viewModel);
+        socket.emit('join', {'gameId': gameId, 'uuid': uuid})
 
         socket.on('game', function(data){
-            // Knockout Implementation
-            console.log("Game ", data)
-            ko.mapping.fromJS(data, viewModel);
+            if(typeof viewModel == 'undefined'){
+                viewModel = ko.mapping.fromJS(data)
+                viewModel.player = ko.computed( function(){
+                    return _.find( viewModel.players(), function(player){
+                        return player._id() == uuid 
+                     }) || { _id:'', name:'', score:0, hand:[]}
+                })
+                viewModel.myFace = ko.observable(parseInt(viewModel._bid.face()))
+                viewModel.myQuantity = ko.observable(parseInt(viewModel._bid.quantity()))
+                ko.applyBindings(viewModel);
+            }
+            else
+                ko.mapping.fromJS(data, viewModel);
+            console.log("Game", data)
+            
+            
         })
 
         socket.on('alert', function(data){
@@ -107,5 +118,7 @@ prepend content
             // Change the person's name
             socket.emit('name', prompt("Enter Your Name:", ""))
         })
+        $("#bid").click(function(){
+            socket.emit('bid', {name: viewModel.player().name(), face: viewModel.myFace(), quantity: viewModel.myQuantity()})
+        })
 
-        socket.emit('join', {'gameId': gameId, 'uuid': uuid})

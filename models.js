@@ -11,6 +11,7 @@ var Player = new Schema({
 
 var Bid = new Schema({
       _player   : {type: Schema.ObjectId, ref: 'Player'}
+    , name      : {type: String, default:'initial'}
     , face      : {type: String, default:'0'}
     , quantity  : {type: String, default:'0'}
 })

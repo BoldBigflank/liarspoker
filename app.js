@@ -48,7 +48,7 @@ app.get('/', function (req, res) {
         req.session.uuid = player._id
     } 
     liarspoker.join('index', req.session.uuid, function(err, game){
-        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, game: game, gameId: game._id});
+        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, gameId: game._id});
     })
     
 }); 
@@ -72,10 +72,10 @@ io.sockets.on('connection', function (socket) {
         socket.set('uuid', data.uuid)
         socket.set('game', data.gameId)
 
-        // liarspoker.join(data.gameId, data.uuid, function(err, res){
-        //     if (err) { socket.emit("alert", err) }
-        //     else{ io.sockets.emit("game", res ) }
-        // })
+        liarspoker.join(data.gameId, data.uuid, function(err, res){
+            if (err) { socket.emit("alert", err) }
+            else{ io.sockets.emit("game", res ) }
+        })
     })
 
     // Player changes their name
@@ -97,6 +97,7 @@ io.sockets.on('connection', function (socket) {
         socket.get('game', function(err, gameId){
             liarspoker.bid(gameId, data, function(err, game){
                 io.sockets.emit('game', game)
+                socket.emit('alert', "Bid called")
             })
         })
     })
