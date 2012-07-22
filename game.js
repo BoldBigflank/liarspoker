@@ -126,7 +126,7 @@ exports.challenge = function(gameId, uuid, cb){
 		_.each(game.players, function(player){ allDice = allDice.concat(player.hand) })
 		var totalQuantity = 0
 		_.each(allDice, function(num){ if(num == game._bid.face) totalQuantity += 1})
-		var winner = (game._bid.quantity >= totalQuantity) ? game.turn : game._bid.player
+		var winner = (game._bid.quantity > totalQuantity) ? game.turn : game._bid.player // challenger : bidder
 		var spoils = game.players.length - 1
 		
 		_.each(game.players, function(player){
