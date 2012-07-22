@@ -40,9 +40,7 @@ exports.join = function(gameName, id, cb){
 		if(!game){
 			console.log("new game")
 			game = new Game({name:gameName})
-			game.save(function(err){
-
-			})
+			game.save()
 		}
 		var player = game.players.id(id)
 		if(!player){

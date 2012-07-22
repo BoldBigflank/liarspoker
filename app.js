@@ -41,13 +41,9 @@ app.configure('production', function(){
 // Routes
 
 app.get('/', function (req, res) {
-    // if (typeof req.session.uuid === 'undefined'){
-    //     // req.session.uuid = Math.floor(Math.random()*10000001)
-    //     var player = new Player()
-    //     player.save()
-    //     req.session.uuid = player._id
-    // }
-    req.session.uuid = mongoose.Types.ObjectId()
+    if (typeof req.session.uuid === 'undefined'){
+        req.session.uuid = mongoose.Types.ObjectId()
+    }
     liarspoker.join('index', req.session.uuid, function(err, game){
         res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, gameId: game._id});
     })
