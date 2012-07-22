@@ -35,6 +35,7 @@ exports.init = function(){
 // }
 
 exports.join = function(gameName, id, cb){
+	if(!id) id = mongoose.Types.ObjectId()
 	console.log("game.join", gameName, id) // Add the player to the game
 	Game.findOne({'name':gameName}).exec(function(err, game){
 		if(!game){
@@ -118,8 +119,10 @@ exports.challenge = function(gameId, uuid, cb){
 	console.log("game.challenge", gameId, uuid) // End the round, determine winner
 	Game.findById(gameId).populate('_bid').populate('_bid._player').exec(function(err, game){
 		console.log(game.turn, uuid)
-		if(game.turn == uuid)
+		if(game.turn != uuid){
 			cb("It is not your turn")
+			return
+		}
 		// Gather all the hands
 		var allDice = []
 		_.each(game.players, function(player){ allDice = allDice.concat(player.hand) })
@@ -130,10 +133,10 @@ exports.challenge = function(gameId, uuid, cb){
 		
 		_.each(game.players, function(player){
 			// If the bidder
-			if(player._id == winner)
+			if(player._id.toString() == game._bid._player)
 				player.score += (game._bid.quantity >= totalQuantity) ? spoils : -1
 			// If the challenger
-			else if(player._id == winner)
+			else if(player._id.toString() == game.turn)
 				player.score += (game._bid.quantity >= totalQuantity) ? -1 : spoils
 			else
 				player.score += -1

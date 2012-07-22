@@ -43,7 +43,7 @@ prepend content
                 h1(data-bind="text: _bid.face")
             
         .row
-            .span5(data-bind="visible: player()._id().toString() == turn()")
+            .span5(data-bind="visible: player()._id() == turn()")
                 .row
                     .span5
                         h1 Your bid
@@ -77,7 +77,11 @@ prepend content
             
             .navbar-inner
                 .container-fluid
-                    h1#playerName(data-bind="text: player().name") Hand
+                    .row(data-bind="style:{ color: turn() && turn() == player()._id() ? 'green' : ''}")
+                        .span4
+                            h1#playerName(data-bind="text: player().name")
+                        .span2 
+                            h1(data-bind="text: player().score")
                     .row(data-bind="foreach:player().hand")
                         .span1(data-bind="text:$data")
 
