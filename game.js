@@ -12,28 +12,6 @@ exports.init = function(){
 	Bid.find().remove()
 }
 
-// exports.getGame = function(name, playerId, cb){
-// 	Game.findOne({'name':name}).populate('_bid').populate('_turn').populate('_bid._player').exec(function(err, game){
-// 		if(!game){
-// 		    var bid = new Bid()
-// 		    var turn = new Player({'_id':''})
-// 		    game = new Game({'name':'index', '_bid':bid._id, '_turn':turn})
-// 		    Player.findById(playerId, function(err, player){
-// 		    	game.players.push(player)
-// 		    	game.save(function(err){
-// 		    		cb(err, game)
-// 		    	})
-// 		    })
-// 		}
-// 		else{
-// 			if(!game.players.id(playerId)){
-// 				game.players.push()
-// 			}
-// 		}
-// 			cb(err, game)
-// 	})
-// }
-
 exports.join = function(gameName, id, cb){
 	if(!id) id = mongoose.Types.ObjectId()
 	console.log("game.join", gameName, id) // Add the player to the game
@@ -55,9 +33,7 @@ exports.join = function(gameName, id, cb){
 		bid.save()
 		if(!game._bid) game._bid = bid
 		game.save(function(err){
-			Game.findById(game._id).populate('_bid').exec(function(err, game){
-				cb(null, game)
-			})
+			Game.findById(game._id).populate('_bid').exec(cb)
 		})
 	})
 }
@@ -104,7 +80,7 @@ exports.bid = function(gameId, uuid, bid, cb){
 		bidObject.player = uuid
 		bidObject.save()
 		// Next player is it
-		game._bid = bidObject._id // Not sure how the populated object will handle this
+		game._bid = bidObject // Not sure how the populated object will handle this
 		var players = _.map(game.players, function(val, key){; return val._id.toString() })
 		var i = _.indexOf(players, game.turn)
 		game.turn = game.players[(i+1) % game.players.length]._id.toString()
@@ -146,13 +122,18 @@ exports.challenge = function(gameId, uuid, cb){
 exports.next = function(gameId, cb){
 	console.log("game.next", gameId)
 	Game.findById(gameId).populate('_bid').exec(function(err, game){
+		// Give the players new hands
+		_.each(game.players, function(player){
+			player.hand.length = 0
+			player.hand = new Array()
+			while (player.hand.length < config.game.handSize) { player.hand.push( Math.floor(Math.random() * config.game.maxDie +1 )) }
+		})
 		game.state = 'open'
 		var bid = new Bid()
+		bid.save()
 		game._bid = bid
 		game.save(function(err){
-			cb(err, game)	
+			Game.findById(game._id).populate('_bid').exec(cb)
 		})
-	})	
-	cb()
+	})
 }
-

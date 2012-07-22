@@ -44,10 +44,7 @@ app.get('/', function (req, res) {
     if (typeof req.session.uuid === 'undefined'){
         req.session.uuid = mongoose.Types.ObjectId()
     }
-    liarspoker.join('index', req.session.uuid, function(err, game){
-        res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, gameId: game._id});
-    })
-    
+    res.render(__dirname + '/views/index.jade', {title: "Liar's Poker", uuid: req.session.uuid, gameName: 'index'});
 }); 
 
 io.sockets.on('connection', function (socket) {
@@ -67,11 +64,13 @@ io.sockets.on('connection', function (socket) {
     // User enters
     socket.on('join', function(data){
         socket.set('uuid', data.uuid)
-        socket.set('game', data.gameId)
-
-        liarspoker.join(data.gameId, data.uuid, function(err, res){
+        
+        liarspoker.join(data.gameName, data.uuid, function(err, game){
             if (err) { socket.emit("alert", err) }
-            else{ io.sockets.emit("game", res ) }
+            else{
+                socket.set('game', game._id.toString())
+                io.sockets.emit("game", game ) 
+            }
         })
     })
 
@@ -116,7 +115,8 @@ io.sockets.on('connection', function (socket) {
     // User requests next round
     socket.on('next', function(data){
         socket.get('game', function(err, gameId){
-            liarspoker.liar(gameId, data, function(err, game){
+            liarspoker.next(gameId, function(err, game){
+                if(err) socket.emit('alert', err)
                 io.sockets.emit('game', game)
             })
         })

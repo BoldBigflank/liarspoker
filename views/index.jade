@@ -30,17 +30,17 @@ prepend content
                         h1(data-bind="text: name")
                     .span2 
                         h1(data-bind="text: score")
-                .row(data-bind="foreach: hand")
+                .row(data-bind="visible: viewModel.state() == 'result', foreach: hand")
                     .span1(data-bind="text:$data")
-        .row
-            .span1
-                h1 Bid
-            .span2
-                h1(data-bind="text: _bid.name")
-            .span1
-                h1(data-bind="text: _bid.quantity")
-            .span1
-                h1(data-bind="text: _bid.face")
+        .row(data-bind="visible: _bid.face() > 0")
+            .span5
+                h1
+                    span(data-bind="text: _bid.name")
+                    |  has bid 
+                    span(data-bind="text: _bid.quantity")
+                    |  
+                    span(data-bind="text: _bid.face")
+                    | 's
             
         .row
             .span5(data-bind="visible: player()._id() == turn() && state() == 'open'")
@@ -61,7 +61,7 @@ prepend content
                         span(data-bind="text: myQuantity")
                     .span1
                         span(data-bind="text: myFace")
-                        | s
+                        | 's
                 .row
                     .span1.offset2
                         button.btn(data-bind="click: function(){viewModel.myQuantity(viewModel.myQuantity()-1)}") -
@@ -74,8 +74,9 @@ prepend content
             .container-fluid
                 .row
                     .alert.alert-error#alert(style="display: none") CRISIS ALERT
-                .row
-                    .alert(data-bind="visible: state()=='result', css: {'alert-success': viewModel.turn() == viewModel.player()._id(), 'alert-error':viewModel.turn() != viewModel.player()._id()}") Winning
+                .row(data-bind="visible: state()=='result'")
+                    .alert(data-bind="text: viewModel.turn() == viewModel.player()._id() ? 'You win!' : 'You lose!', css: {'alert-success': viewModel.turn() == viewModel.player()._id(), 'alert-error':viewModel.turn() != viewModel.player()._id()}") Winning
+                    //- button.btn#next Next
             
             .navbar-inner
                 .container-fluid
@@ -92,11 +93,11 @@ prepend content
     script(src="/socket.io/socket.io.js")
     script
         var uuid = '#{uuid}'
-        var gameId = '#{gameId}'
+        var gameName = '#{gameName}'
         var alertInterval
         var viewModel
         var socket = io.connect('#');
-        socket.emit('join', {'gameId': gameId, 'uuid': uuid})
+        socket.emit('join', {'gameName': gameName, 'uuid': uuid})
 
         socket.on('game', function(data){
             if(typeof viewModel == 'undefined'){
@@ -135,6 +136,10 @@ prepend content
 
         $("#challenge").click(function(){
             socket.emit('challenge')
+        })
+
+        $("#next").click(function(){
+            socket.emit('next')
         })
 
         var setAlert = function(message){
