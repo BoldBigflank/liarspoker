@@ -7,4 +7,5 @@ exports.pubnub = {
 exports.game = {
 	  handSize : 5
 	, maxDie : 6
+	, buyin : 10
 }

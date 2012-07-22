@@ -1,3 +1,12 @@
 Liar's Poker
 Created by Alex Swan
 7/20/2012
+
+Check the models.js file to see how the game object is formed.
+
+To Do
+Quantity/Face
+Find the winner accurately
+Next round button
+Limit players
+(Are the players not getting deleted somehow?)

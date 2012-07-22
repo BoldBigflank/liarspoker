@@ -1,19 +1,20 @@
 var mongoose = require('mongoose')
+var config = require('./config')
 var Schema = mongoose.Schema
     , ObjectId = Schema.ObjectId;
 
 var Player = new Schema({
       id        : ObjectId
     , name      : { type:String, default:'name'}
-    , score     : { type:Number, default:0}
+    , score     : { type:Number, default:config.game.buyin}
     , hand      : [{type: Number}]
 })
 
 var Bid = new Schema({
       _player   : {type: Schema.ObjectId, ref: 'Player'}
     , name      : {type: String, default:'initial'}
-    , face      : {type: String, default:'0'}
-    , quantity  : {type: String, default:'0'}
+    , face      : {type: Number, default:'0'}
+    , quantity  : {type: Number, default:'1'}
 })
 
 var Game = new Schema({
@@ -21,9 +22,9 @@ var Game = new Schema({
     , name        : {type: String, default: ''}
     , state         : {type: String, default: 'open'}
     , players       : [Player]
-    , _turn         : { type: Schema.ObjectId, ref: 'Player' }
+    , turn          : String
     , _bid          : { type: Schema.ObjectId, ref: 'Bid' }
-    , _winner       : { type: Schema.ObjectId, ref: 'Player'}
+    , winner       : String
 })
 
 mongoose.model("Game", Game);

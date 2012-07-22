@@ -9,25 +9,23 @@ prepend content
     .navbar.navbar-fixed-top
         .navbar-inner
             .container-fluid
-                p.navbar-text.name.pull-left#playerName(data-bind="text: player().name") Name
+                ul.nav.pull-left
+                    li
+                        p.brand.navbar-text.name.pull-left Liar's Poker
+                        
                 ul.nav.pull-right
                     li.dropdown
                         a.dropdown-toggle(href="#") 
+                            i.icon-user  
                             span#playerScore(data-bind="text: player().score") Score
-                            b.caret
-                        ul.dropdown-menu#scores(data-bind="foreach: players")
-                            li
-                                span(data-bind="text: name")
-                                |  -> 
-                                span(data-bind="text: score")
                 ul.nav.pull-right
                     a.btn#brag Invite
 
     .container-fluid
-        .alert.alert-error#alert(style="display: none") CRISIS ALERT
+        
         .row(data-bind="foreach: players")
             .span6(data-bind="visible: $parent.player()._id() != _id()")
-                .row(data-bind="style:{ color: $parent._turn && $parent._turn._id() == _id() ? 'green' : ''}")
+                .row(data-bind="style:{ color: $parent.turn() && $parent.turn() == _id().toString() ? 'green' : ''}")
                     .span4
                         h1(data-bind="text: name")
                     .span2 
@@ -40,43 +38,49 @@ prepend content
             .span2
                 h1(data-bind="text: _bid.name")
             .span1
-                h1(data-bind="text: _bid.face")
-            .span1
                 h1(data-bind="text: _bid.quantity")
+            .span1
+                h1(data-bind="text: _bid.face")
+            
         .row
-            .span5(data-bind="visible: player()._id() == _turn._id()")
+            .span5(data-bind="visible: player()._id().toString() == turn()")
                 .row
                     .span5
                         h1 Your bid
                 .row
                     .span2
-                        button.btn Call Liar
-                .row
-                    .span1.offset1
-                        button.btn(data-bind="text: myQuantity, click: function(){viewModel.myQuantity(viewModel.myQuantity()-1)}") Fewer
-                    .span1
-                        button.btn(data-bind="text: myFace, click: function(){viewModel.myFace(viewModel.myFace()+1)}") Higher
-                    .span1
-                        button.btn(data-bind="click: function(){viewModel.myQuantity(viewModel.myQuantity()+1)}") More
-                .row
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    .span1 Die
-                    
+                        button.btn#challenge Challenge
                 .row
                     .span1.offset2
-                        button.btn(data-bind="click: function(){viewModel.myFace(viewModel.myFace()-1)}") Lower
+                        button.btn(data-bind="click: function(){viewModel.myQuantity(viewModel.myQuantity()+1)}") +
+                    .span1
+                        button.btn(data-bind="click: function(){viewModel.myFace(viewModel.myFace()+1)}") +
+                .row
+                    .span2 Your Bid
+                    .span1
+                        span(data-bind="text: myQuantity")
+                    .span1
+                        span(data-bind="text: myFace")
+                        | s
+                .row
+                    .span1.offset2
+                        button.btn(data-bind="click: function(){viewModel.myQuantity(viewModel.myQuantity()-1)}") -
+                    .span1
+                        button.btn(data-bind="click: function(){viewModel.myFace(viewModel.myFace()-1)}") -
                 .row
                     .span2
                         button.btn#bid Bid
         .navbar.navbar-fixed-bottom
+            .container-fluid
+                .row
+                    .alert.alert-error#alert(style="display: none") CRISIS ALERT
+            
             .navbar-inner
                 .container-fluid
-                    h1(data-bind="text: player().name") Hand
+                    h1#playerName(data-bind="text: player().name") Hand
                     .row(data-bind="foreach:player().hand")
                         .span1(data-bind="text:$data")
+
 
     
     script(src="/socket.io/socket.io.js")
@@ -103,22 +107,34 @@ prepend content
             else
                 ko.mapping.fromJS(data, viewModel);
             console.log("Game", data)
-            
-            
         })
 
-        socket.on('alert', function(data){
-            console.log("ALERT: ", data)
-            $('#alert').html(data).show()
-            clearInterval(alertInterval)
-            alertInterval = setInterval(function(){$('#alert').hide()}, 4000)
-        })
+        socket.on('alert', function(data){ setAlert(data) })
 
         $("#playerName").click(function(){
             // Change the person's name
             socket.emit('name', prompt("Enter Your Name:", ""))
         })
+
         $("#bid").click(function(){
-            socket.emit('bid', {name: viewModel.player().name(), face: viewModel.myFace(), quantity: viewModel.myQuantity()})
+            // Validation here
+            if(viewModel.myFace() <= 0 || viewModel.myQuantity() <= 0)
+                setAlert("You must choose a valid bid")
+            else if(viewModel.myFace() <= viewModel._bid.face() && viewModel.myQuantity() <= viewModel._bid.quantity() )
+                setAlert("You must bid higher than the previous bid")
+            else 
+                socket.emit('bid', {name: viewModel.player().name(), face: viewModel.myFace(), quantity: viewModel.myQuantity()})
+                
         })
+
+        $("#challenge").click(function(){
+            socket.emit('challenge')
+        })
+
+        var setAlert = function(message){
+            console.log("ALERT: ", message)
+            $('#alert').html(message).show()
+            clearInterval(alertInterval)
+            alertInterval = setInterval(function(){$('#alert').hide()}, 4000)
+        }
 
