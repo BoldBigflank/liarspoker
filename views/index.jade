@@ -43,7 +43,7 @@ prepend content
                 h1(data-bind="text: _bid.face")
             
         .row
-            .span5(data-bind="visible: player()._id() == turn()")
+            .span5(data-bind="visible: player()._id() == turn() && state() == 'open'")
                 .row
                     .span5
                         h1 Your bid
@@ -74,6 +74,8 @@ prepend content
             .container-fluid
                 .row
                     .alert.alert-error#alert(style="display: none") CRISIS ALERT
+                .row
+                    .alert(data-bind="visible: state()=='result', css: {'alert-success': viewModel.turn() == viewModel.player()._id(), 'alert-error':viewModel.turn() != viewModel.player()._id()}") Winning
             
             .navbar-inner
                 .container-fluid

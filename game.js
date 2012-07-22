@@ -68,7 +68,6 @@ exports.leave = function(gameId, id, cb){
 		if(!game) return cb("Game not found")
 		var player = game.players.id(id)
 		if(player){
-			console.log("Found the player", player)
 			if(game.turn == player._id.toString()){
 				if(game.players.length <= 1)
 					game.turn = null
@@ -102,7 +101,7 @@ exports.bid = function(gameId, uuid, bid, cb){
 	Game.findById(gameId).exec(function(err, game){
 		// If it's the person's turn: set the bid, make the turn the next player's
 		var bidObject = new Bid(bid)
-		bidObject._player = uuid
+		bidObject.player = uuid
 		bidObject.save()
 		// Next player is it
 		game._bid = bidObject._id // Not sure how the populated object will handle this
@@ -117,8 +116,7 @@ exports.bid = function(gameId, uuid, bid, cb){
 
 exports.challenge = function(gameId, uuid, cb){
 	console.log("game.challenge", gameId, uuid) // End the round, determine winner
-	Game.findById(gameId).populate('_bid').populate('_bid._player').exec(function(err, game){
-		console.log(game.turn, uuid)
+	Game.findById(gameId).populate('_bid').exec(function(err, game){
 		if(game.turn != uuid){
 			cb("It is not your turn")
 			return
@@ -128,26 +126,18 @@ exports.challenge = function(gameId, uuid, cb){
 		_.each(game.players, function(player){ allDice = allDice.concat(player.hand) })
 		var totalQuantity = 0
 		_.each(allDice, function(num){ if(num == game._bid.face) totalQuantity += 1})
-		var winner = (game._bid.quantity >= totalQuantity) ? game._bid._player._id : game.turn
+		var winner = (game._bid.quantity >= totalQuantity) ? game.turn : game._bid.player
 		var spoils = game.players.length - 1
 		
 		_.each(game.players, function(player){
-			// If the bidder
-			if(player._id.toString() == game._bid._player)
-				player.score += (game._bid.quantity >= totalQuantity) ? spoils : -1
-			// If the challenger
-			else if(player._id.toString() == game.turn)
-				player.score += (game._bid.quantity >= totalQuantity) ? -1 : spoils
-			else
-				player.score += -1
-			player.save()
-			// Else
+			player.score += (player._id.toString() == winner) ? spoils : -1
 		})
+
 		game.turn = winner
-		game.winner = winner
 		game.state = 'result'
+		game.bid = new Bid()
 		game.save(function(err){
-			cb(err, game)	
+			Game.findById(game._id).populate('_bid').exec(cb)
 		})
 		
 	})

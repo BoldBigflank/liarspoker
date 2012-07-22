@@ -11,7 +11,7 @@ var Player = new Schema({
 })
 
 var Bid = new Schema({
-      _player   : {type: Schema.ObjectId, ref: 'Player'}
+      player    : {type: String, default:null}
     , name      : {type: String, default:'initial'}
     , face      : {type: Number, default:'0'}
     , quantity  : {type: Number, default:'1'}
@@ -22,9 +22,8 @@ var Game = new Schema({
     , name        : {type: String, default: ''}
     , state         : {type: String, default: 'open'}
     , players       : [Player]
-    , turn          : String
+    , turn          : {type:String, default:null}
     , _bid          : { type: Schema.ObjectId, ref: 'Bid' }
-    , winner       : String
 })
 
 mongoose.model("Game", Game);
